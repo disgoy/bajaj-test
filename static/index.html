@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>BAJAJ API Tester</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem; }
+    textarea { width: 500px; height: 120px; font-family: monospace; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 6px; white-space: pre-wrap; }
+    button { margin: 5px; padding: 8px 16px; border-radius: 6px; }
+    #error { color: red; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h2>BFHL API Tester</h2>
+
+  <p>Enter your JSON body (must contain a <code>data</code> array):</p>
+  <textarea id="input">{ "data": ["a","1","334","4","R","$"] }</textarea><br>
+
+  <!-- Preset buttons -->
+  <div>
+    <button onclick="loadPreset(1)">Load Example 1</button>
+    <button onclick="loadPreset(2)">Load Example 2</button>
+    <button onclick="loadPreset(3)">Load Example 3</button>
+  </div>
+
+  <button onclick="callApi()">Send POST to /bfhl</button>
+
+  <h3>Response:</h3>
+  <pre id="output"></pre>
+  <p id="error"></p>
+
+  <script>
+    const presets = {
+      1: { "data": ["a","1","334","4","R","$"] },
+      2: { "data": ["2","a","y","4","&","-","*","5","92","b"] },
+      3: { "data": ["hello","123","99","!","X","yZ"] }
+    };
+
+    function loadPreset(num) {
+      document.getElementById("input").value = JSON.stringify(presets[num], null, 2);
+      document.getElementById("output").textContent = "";
+      document.getElementById("error").textContent = "";
+    }
+
+    async function callApi() {
+      document.getElementById("error").textContent = "";
+      document.getElementById("output").textContent = "";
+
+      let raw = document.getElementById("input").value;
+
+      try {
+        JSON.parse(raw); // check JSON is valid
+      } catch (e) {
+        document.getElementById("error").textContent = "❌ Invalid JSON format!";
+        return;
+      }
+
+      try {
+        let response = await fetch("/bfhl", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: raw
+        });
+        let data = await response.json();
+        document.getElementById("output").textContent =
+          JSON.stringify(data, null, 2);
+      } catch (err) {
+        document.getElementById("error").textContent = "❌ Error: " + err;
+      }
+    }
+  </script>
+</body>
+</html>

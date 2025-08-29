@@ -4,18 +4,42 @@ from typing import Any, List
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from dotenv import load_dotenv
+import time
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
+start_time = time.time()
 
 load_dotenv()  # take environment variables from .env file
 
 app = FastAPI()
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get("/")
+def home():
+    return FileResponse("static/index.html")
+
+# @app.get("/")
+# def root():
+#     return {"message": "Welcome to the BAJAJ API. Use POST /bfhl."}
+
+@app.get("/health")
+def health():
+    uptime = round(time.time() - start_time)
+    return {
+        "status": "running",
+        "uptime": f"{uptime}s",
+        "version": "1.0.0"
+    }
 
 class DataIn(BaseModel):
     data: List[Any]  # accept numbers/strings; we'll coerce to str
 
 def build_user_id() -> str:
     # Set these via environment variables when you deploy (or change defaults here)
-    full_name = os.getenv("FULL_NAME", "john_doe").strip().lower().replace(" ", "_")
-    dob = os.getenv("DOB_DDMMYYYY", "17091999").strip()  # ddmmyyyy
+    full_name = os.getenv("FULL_NAME", "disha_goyal").strip().lower().replace(" ", "_")
+    dob = os.getenv("DOB_DDMMYYYY", "15052004").strip()  # ddmmyyyy
     return f"{full_name}_{dob}"
 
 @app.post("/bfhl")
@@ -24,7 +48,10 @@ def bfhl(payload: DataIn):
     try:
         items = [str(x).strip() for x in payload.data]
     except Exception:
-        raise HTTPException(status_code=400, detail="Invalid 'data' array.")
+        return {
+            "is_success": False,
+            "error": "Invalid input: expected array of strings/numbers"
+        }
 
     odd_numbers: List[str] = []
     even_numbers: List[str] = []
